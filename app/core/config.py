@@ -1,32 +1,31 @@
 import os
-from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
+from pydantic import BaseModel
 
-class Settings(BaseSettings):
-    APP_NAME: str = "FastApi App"
-    DEBUG: bool = True
+# загружаем .env в os.environ
+load_dotenv()
 
-    HOST: str = "127.0.0.1"
-    PORT: int = 8000
+class Settings(BaseModel):
+    # app
+    APP_NAME: str = os.getenv("APP_NAME", "FastAPI App")
+    DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
+
+    HOST: str = os.getenv("HOST", "127.0.0.1")
+    PORT: int = int(os.getenv("PORT", 8000))
 
     # database
-    DB_HOST: str = "localhost"
-    DB_PORT: int = 5432
-    DB_NAME: str = "tutor_db"
-    DB_USER: str = "postgres"
-    DB_PASSWORD: str = "postgres"
+    DB_HOST: str = os.getenv("DB_HOST", "localhost")
+    DB_PORT: int = int(os.getenv("DB_PORT", 5432))
+    DB_NAME: str = os.getenv("DB_NAME", "tutor_db")
+    DB_USER: str = os.getenv("DB_USER", "postgres")
+    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "postgres")
 
     @property
     def DATABASE_URL(self) -> str:
-        # Используем asyncpg в строке подключения
         return (
             f"postgresql+asyncpg://"
             f"{self.DB_USER}:{self.DB_PASSWORD}"
             f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
         )
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-
 
 settings = Settings()
