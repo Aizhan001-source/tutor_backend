@@ -4,7 +4,6 @@ from decimal import Decimal
 
 
 class TutorCreate(BaseModel):
-    user_id: UUID
     bio: str | None = None
     experience_years: int | None = None
     education: str | None = None

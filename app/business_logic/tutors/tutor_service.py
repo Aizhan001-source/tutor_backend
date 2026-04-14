@@ -1,4 +1,6 @@
 from uuid import UUID
+from fastapi import HTTPException
+
 from data_access.tutors.tutor_repository import TutorRepository
 
 
@@ -11,15 +13,19 @@ class TutorService:
         return await self.repo.get_all()
 
     async def get_by_id(self, tutor_id: UUID):
-        return await self.repo.get_by_id(tutor_id)
+        tutor = await self.repo.get_by_id(tutor_id)
+        if not tutor:
+            raise HTTPException(status_code=404, detail="Tutor not found")
+        return tutor
 
     async def create(self, data):
         return await self.repo.create(data)
 
     async def update(self, tutor_id: UUID, data):
         tutor = await self.repo.get_by_id(tutor_id)
+
         if not tutor:
-            raise ValueError("Tutor not found")
+            raise HTTPException(status_code=404, detail="Tutor not found")
 
         for field, value in data.dict(exclude_unset=True).items():
             setattr(tutor, field, value)
@@ -28,7 +34,8 @@ class TutorService:
 
     async def delete(self, tutor_id: UUID):
         tutor = await self.repo.get_by_id(tutor_id)
+
         if not tutor:
-            raise ValueError("Tutor not found")
+            raise HTTPException(status_code=404, detail="Tutor not found")
 
         await self.repo.delete(tutor)

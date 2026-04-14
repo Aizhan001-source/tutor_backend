@@ -11,11 +11,13 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
     email = Column(String(255), nullable=False, unique=True)
     password_hash = Column(String(255), nullable=False)
-    phone = Column(String(20))
+    
     first_name = Column(String(100))
     last_name = Column(String(100))
+    phone = Column(String(20))
     avatar_url = Column(String(100))
 
     role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"))
@@ -26,8 +28,8 @@ class User(Base):
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
-    admin = relationship("Admin", back_populates="user", uselist=False)
     role = relationship("Role", back_populates="users")
+    admin = relationship("Admin", back_populates="user", uselist=False)
     
     # связь между User и Tutor (1 к 1).
     tutor_profile = relationship("Tutor", back_populates="user", uselist=False)
@@ -41,8 +43,8 @@ class User(Base):
 
     # for favorite
     favorite_tutors = relationship("Favorite", foreign_keys="Favorite.user_id", back_populates="user")
-    favorited_by = relationship("Favorite.tutor_id", back_populates="tutor")
-
+    favorited_by = relationship("Favorite", foreign_keys="Favorite.tutor_id", back_populates="tutor")
+    
     # for message
     sent_messages = relationship("Message", foreign_keys="Message.sender_id", back_populates="sender")
     received_messages = relationship("Message", foreign_keys="Message.receiver_id", back_populates="receiver")

@@ -12,15 +12,12 @@ class Message(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    sender_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    receiver_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    sender_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    receiver_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
 
-    content = Column(String(2000), nullable=False)
-
-    is_read = Column(Boolean, default=False)
+    content = Column(String(2000))
 
     created_at = Column(TIMESTAMP, server_default=func.now())
 
-    sender = relationship("User", foreign_keys=[sender_id])
-    receiver = relationship("User", back_populates=[receiver_id])
-    
+    sender = relationship("User", foreign_keys=[sender_id], back_populates="sent_messages")
+    receiver = relationship("User", foreign_keys=[receiver_id], back_populates="received_messages")

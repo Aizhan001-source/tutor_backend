@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-
+from uuid import UUID
 from data_access.db.models.admin import Admin
 
 
@@ -13,7 +13,7 @@ class AdminRepository:
         return result.scalars().all()
     
 
-    async def get_by_id(self, admin_id: str) -> Admin | None:
+    async def get_by_id(self, admin_id: UUID) -> Admin | None:
         result = await self.db.execute(select(Admin).where(Admin.id == admin_id))
         return result.scalar_one_or_none()
     

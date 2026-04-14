@@ -15,8 +15,8 @@ class Subject(Base):
     name = Column(String(255), nullable=False, unique=True)
     description = Column(Text)
 
-    icon = Column(String(100))
-    level = Column(String(100))
+    # icon = Column(String(100))
+    # level = Column(String(100))
 
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now())

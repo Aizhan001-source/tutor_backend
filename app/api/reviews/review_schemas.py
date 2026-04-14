@@ -1,13 +1,13 @@
-from typing import Optional
 from pydantic import BaseModel
 from uuid import UUID
+from typing import Optional
 
 
 class ReviewCreate(BaseModel):
     student_id: UUID
     tutor_id: UUID
     booking_id: UUID
-    raiting: int
+    rating: int
     comment: str
 
 
@@ -23,9 +23,5 @@ class ReviewRead(BaseModel):
 
 
 class ReviewUpdate(BaseModel):
-    raiting: Optional[int] = None
+    rating: Optional[int] = None
     comment: Optional[str] = None
-
-
-    
-

@@ -35,3 +35,8 @@ api_router.include_router(
     tutors_router, 
     tags=["tutors"]
     )
+
+api_router.include_router(
+    tutors_router, 
+    tags=["reviews"]
+    )

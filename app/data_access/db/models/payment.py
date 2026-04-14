@@ -21,19 +21,15 @@ class PaymentStatus(str, Enum):
 class Payment(Base):
     __tablename__ = "payments"
 
-    __table_args__ = (CheckConstraint("amount > 0"),)
-
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    booking_id = Column(UUID(as_uuid=True),ForeignKey("bookings.id"),nullable=False,index=True)
+    booking_id = Column(UUID(as_uuid=True), ForeignKey("bookings.id"), nullable=False, index=True)
 
     amount = Column(Numeric(10, 2), nullable=False)
     currency = Column(String(10), default="KZT", nullable=False)
 
-    status = Column(SqlEnum(PaymentStatus, name="payment_status"),default=PaymentStatus.pending,nullable=False)
+    status = Column(SqlEnum(PaymentStatus), default=PaymentStatus.pending, nullable=False)
 
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
-    updated_at = Column(TIMESTAMP(timezone=True),server_default=func.now(),onupdate=func.now())
 
-    # relationships
     booking = relationship("Booking", back_populates="payments")

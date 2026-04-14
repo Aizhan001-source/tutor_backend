@@ -19,13 +19,13 @@ class Booking(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     
-    student_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True, nullable=False)
-    tutor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True, nullable=False)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    tutor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     
-    status = Column(SqlEnum(BookingStatus, name="booking_status"),default=BookingStatus.pending,nullable=False,index=True)
+    status = Column(SqlEnum(BookingStatus, name="booking_status"),default=BookingStatus.pending)
     cancel_reason = Column(String(255), nullable=True)
     
-    start_time = Column(TIMESTAMP(timezone=True), nullable=False, index=True)
+    start_time = Column(TIMESTAMP(timezone=True), nullable=False)
     end_time = Column(TIMESTAMP(timezone=True), nullable=False)
 
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())

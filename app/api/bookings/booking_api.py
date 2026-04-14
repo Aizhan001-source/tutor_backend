@@ -12,9 +12,8 @@ from data_access.db.session import get_db
 router = APIRouter()
 
 
-def get_booking_service(db: AsyncSession = Depends(get_db),) -> BookingService:
-    repo = BookingRepository(db)
-    return BookingService(repo)
+def get_booking_service(db: AsyncSession = Depends(get_db)) -> BookingService:
+    return BookingService(BookingRepository(db))
 
 
 @router.get("/me", response_model=list[BookingRead])
@@ -22,85 +21,33 @@ async def get_my_bookings(
     current_user: CurrentUser = Depends(get_current_user),
     service: BookingService = Depends(get_booking_service),
 ):
-    # Только студент может смотреть свои бронирования
     if current_user.role != "student":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only students can view their bookings"
-        )
-    return await service.get_bookings_by_student(student_id=current_user.id)
+        raise HTTPException(403, "Only students")
+    return await service.get_bookings_by_student(current_user.id)
 
 
 @router.post("/", response_model=BookingRead)
 async def create_booking(
     booking: BookingCreate,
-    current_user: CurrentUser = Depends(get_current_user(required_roles=["student"])),
+    current_user: CurrentUser = Depends(get_current_user),
     service: BookingService = Depends(get_booking_service),
 ):
-    return await service.create_booking(student_id=current_user.id, data=booking)
+    return await service.create_booking(current_user.id, booking)
 
 
 @router.get("/{booking_id}", response_model=BookingRead)
 async def get_booking(
     booking_id: UUID,
-    current_user: CurrentUser = Depends(get_current_user(required_roles=["student", "tutor"])),
-    service: BookingService = Depends(get_booking_service)
-):
-    return await service.get_booking_with_access_check(
-        booking_id=booking_id,
-        user_id=current_user.id,
-        role=current_user.role
-    )
-
-
-@router.patch("/{booking_id}", response_model=BookingRead)
-async def update_booking(
-    booking_id: UUID,
-    booking_data: BookingUpdate,
-    service: BookingService = Depends(get_booking_service),
     current_user: CurrentUser = Depends(get_current_user),
-):
-    updated_booking = await service.update_booking(
-        booking_id=booking_id,
-        user_id=current_user.id,
-        role=current_user.role,
-        data=booking_data
-    )
-    
-    if not updated_booking:
-        raise HTTPException(status_code=404, detail="Booking not found")
-    
-    return updated_booking
-
-
-@router.get("/me", response_model=list[BookingRead])
-async def get_my_bookings(
-    current_user: CurrentUser = Depends(get_current_user(required_roles=["student"])),
     service: BookingService = Depends(get_booking_service),
 ):
-    return await service.get_bookings_by_student(current_user.id)
+    return await service.get_by_id(booking_id)
 
 
-@router.patch("/{booking_id}/cancel", response_model=BookingRead)
+@router.patch("/{booking_id}/cancel")
 async def cancel_booking(
     booking_id: UUID,
-    current_user: CurrentUser = Depends(get_current_user(required_roles=["student"])),
+    current_user: CurrentUser = Depends(get_current_user),
     service: BookingService = Depends(get_booking_service),
 ):
-    return await service.cancel_booking_with_access_check(
-        booking_id=booking_id,
-        user_id=current_user.id,
-        role=current_user.role
-    )
-
-@router.patch("/{booking_id}/confirm", response_model=BookingRead)
-async def confirm_booking(
-    booking_id: UUID,
-    current_user: CurrentUser = Depends(get_current_user(required_roles=["tutor"])),
-    service: BookingService = Depends(get_booking_service),
-):
-    return await service.confirm_booking_with_access_check(
-        booking_id=booking_id,
-        user_id=current_user.id,
-        role=current_user.role
-    )
+    return await service.cancel_booking(booking_id, current_user.id)

@@ -11,7 +11,7 @@ class Role(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    name = Column(String(50), nullable=False, unique=True)
+    name = Column(String(50), unique=True)
     description = Column(Text)
 
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())

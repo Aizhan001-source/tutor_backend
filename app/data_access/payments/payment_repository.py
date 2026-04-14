@@ -1,39 +1,30 @@
 from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from data_access.db.models.payments import Payment
+from data_access.db.models.payment import Payment
+from data_access.db.models.booking import Booking
 
 
 class PaymentRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create_payment(
-            self, 
-            student_id: UUID, 
-            booking_id: UUID, 
-            amount, 
-            currency, 
-            status
-        ):
-        payment = Payment(
-            student_id=student_id,
-            booking_id=booking_id,
-            amount=amount,
-            currency=currency,
-            status=status
-        )
-
+    async def create(self, payment: Payment):
         self.db.add(payment)
         await self.db.commit()
         await self.db.refresh(payment)
+        return payment
 
     async def get_by_id(self, payment_id: UUID):
-        result = await self.db.execute(select(Payment).where(Payment.id == payment_id))
+        result = await self.db.execute(
+            select(Payment).where(Payment.id == payment_id)
+        )
         return result.scalar_one_or_none()
-    
 
-    async def get_by_student(self, student_id: UUID):
-        result = await self.db.execute(select(Payment).join(Payment.booking).where(Payment.booking.student_id == student_id))
-
+    async def get_by_user(self, user_id: UUID):
+        result = await self.db.execute(
+            select(Payment)
+            .join(Payment.booking)
+            .where(Booking.student_id == user_id)
+        )
         return result.scalars().all()

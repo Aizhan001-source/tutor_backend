@@ -23,6 +23,7 @@ class Tutor(Base):
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=False)
     subject_id = Column(UUID(as_uuid=True), ForeignKey("subjects.id"), nullable=False, index=True)
 
@@ -40,7 +41,7 @@ class Tutor(Base):
     total_reviews = Column(Integer, default=0)
 
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
-    updated_at = Column(TIMESTAMP(timezone=True),server_default=func.now(),onupdate=func.now(),server_onupdate=func.now())
+    updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now())
 
     user = relationship("User", back_populates="tutor_profile")
     subject = relationship("Subject", back_populates="tutors")

@@ -11,7 +11,7 @@ class Admin(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), unique=True)
     is_superadmin = Column(Boolean, default=False)
 
     created_at = Column(TIMESTAMP, server_default=func.now())
