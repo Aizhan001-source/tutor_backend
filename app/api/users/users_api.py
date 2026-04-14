@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.users.users_schemas import UserCreate, UserRead
+from api.users.users_schemas import UserCreate, TokenResponse, LoginSchema, UserRead
 from data_access.db.session import get_db
 from data_access.users.users_repository import UsersRepository
 from business_logic.users.users_service import UsersService
@@ -14,19 +14,17 @@ def get_users_service(db: AsyncSession = Depends(get_db)) -> UsersService:
     return UsersService(repo)
 
 
-@router.get("/", response_model=list[UserRead])
-async def get_users(
-    service: UsersService = Depends(get_users_service),
-):
-    return await service.get_users()
+@router.post("/register", response_model=UserRead)
+async def register(
+    data: UserCreate, 
+    service: UsersService = Depends(get_users_service)):
+    return await service.create_user(data)
 
 
-@router.post("/", response_model=UserRead)
-async def create_user(
-    user: UserCreate,
-    service: UsersService = Depends(get_users_service),
-):
+@router.post("/login", response_model=TokenResponse)
+async def login(data: LoginSchema, service: UsersService = Depends(get_users_service)):
     try:
-        return await service.create_user(user)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        token = await service.authenticate(data.email, data.password)
+        return {"access_token": token}
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid credentials")

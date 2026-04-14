@@ -16,6 +16,13 @@ class UsersRepository:
             select(User).where(User.id == user_id)
         )
         return result.scalar_one_or_none()
+    
+
+    async def get_by_email(self, email: str):
+        result = await self.db.execute(
+            select(User).where(User.email == email)
+        )
+        return result.scalar_one_or_none()
 
     async def create(self, user: User) -> User:
         self.db.add(user)

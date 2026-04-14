@@ -6,7 +6,6 @@ from typing import Optional
 import re
 from uuid import UUID
 
-
 class UserCreate(BaseModel):
     first_name: str = Field(
         min_length=2,
@@ -29,8 +28,8 @@ class UserCreate(BaseModel):
     )
 
     password: str = Field(
-        min_length=8,
-        max_length=128,
+        min_length=10,     # ✅ минимум 10 символов
+        max_length=72,     # ✅ безопасный максимум для bcrypt
         description="Пароль пользователя"
     )
 
@@ -62,3 +61,12 @@ class UserRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+class LoginSchema(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
