@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from core.jwt import decode_access_token
@@ -13,3 +14,6 @@ def get_current_user(
         return payload
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
+=======
+
+>>>>>>> origin/lili

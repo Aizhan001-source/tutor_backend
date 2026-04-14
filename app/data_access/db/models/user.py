@@ -1,11 +1,8 @@
-from sqlalchemy import (
-    Column, String, Boolean,
-    ForeignKey, TIMESTAMP
-)
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
 import uuid
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func 
+from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import ( Column, String, Boolean, ForeignKey, TIMESTAMP)
 
 from data_access.db.base import Base
 
@@ -19,14 +16,34 @@ class User(Base):
     phone = Column(String(20))
     first_name = Column(String(100))
     last_name = Column(String(100))
-    avatar_url = Column(String(500))
+    avatar_url = Column(String(100))
 
     role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"))
+    
     is_verified = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
+    admin = relationship("Admin", back_populates="user", uselist=False)
     role = relationship("Role", back_populates="users")
+    
+    # связь между User и Tutor (1 к 1).
     tutor_profile = relationship("Tutor", back_populates="user", uselist=False)
+
+    student_bookings = relationship("Booking",foreign_keys="Booking.student_id",back_populates="student")
+    tutor_bookings = relationship("Booking",foreign_keys="Booking.tutor_id",back_populates="tutor")
+
+    # for reviews
+    given_reviews = relationship("Review", foreign_keys="Review.student_id", back_populates="student")
+    received_reviews = relationship("Review", foreign_keys="Review.tutor_id", back_populates="tutor")
+
+    # for favorite
+    favorite_tutors = relationship("Favorite", foreign_keys="Favorite.user_id", back_populates="user")
+    favorited_by = relationship("Favorite.tutor_id", back_populates="tutor")
+
+    # for message
+    sent_messages = relationship("Message", foreign_keys="Message.sender_id", back_populates="sender")
+    received_messages = relationship("Message", foreign_keys="Message.receiver_id", back_populates="receiver")
+    
