@@ -1,8 +1,10 @@
-from datetime import datetime
+import uuid
 from enum import Enum
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
-from sqlalchemy import String, DateTime, ForeignKey, Enum as SqlEnum
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, TIMESTAMP, ForeignKey, Enum as SqlEnum
 
 from data_access.db.base import Base
 
@@ -15,34 +17,24 @@ class BookingStatus(str, Enum):
 class Booking(Base):
     __tablename__ = "bookings"
 
-    id: Mapped[int] = mapped_column(primary_key=True)   
-    student_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id"),
-        index=True
-    )
-    tutor_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id"),
-        index=True
-    )
-    start_time: Mapped[datetime] = mapped_column(DateTime, index=True)
-    end_time: Mapped[datetime] = mapped_column(DateTime)
-    status: Mapped[BookingStatus] = mapped_column(
-        SqlEnum(BookingStatus),
-        default=BookingStatus.pending,
-        index=True
-    )
-    cancel_reason: Mapped[str | None ] = mapped_column(String(255), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    student_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True, nullable=False)
+    tutor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True, nullable=False)
+    
+    status = Column(SqlEnum(BookingStatus, name="booking_status"),default=BookingStatus.pending,nullable=False,index=True)
+    cancel_reason = Column(String(255), nullable=True)
+    
+    start_time = Column(TIMESTAMP(timezone=True), nullable=False, index=True)
+    end_time = Column(TIMESTAMP(timezone=True), nullable=False)
 
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
-    )
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+    updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # relationships
+    student = relationship("User",foreign_keys=[student_id],back_populates="student_bookings")
+    tutor = relationship("User",foreign_keys=[tutor_id],back_populates="tutor_bookings")
 
-    # relationships (очень желательно)
-    student = relationship("User", foreign_keys=[student_id])
-    tutor = relationship("User", foreign_keys=[tutor_id])
+    payments = relationship("Payment", back_populates="booking")
+
+    review = relationship("Review", back_populates="booking", uselist=False)
