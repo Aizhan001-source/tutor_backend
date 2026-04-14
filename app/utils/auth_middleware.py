@@ -5,6 +5,7 @@ from data_access.users.user_repository import UserRepository
 from utils.token_creator import decode_access_token
 from sqlalchemy.ext.asyncio import AsyncSession
 from data_access.db.session import get_db
+from uuid import UUID
 
 security = HTTPBearer()
 
@@ -28,7 +29,7 @@ def get_current_user(required_roles: list[str] | None = None):
             raise HTTPException(status_code=401, detail="Invalid token payload")
 
         # получаем роль из БД
-        role_name = await user_service.get_user_role_by_user_id(int(user_id))
+        role_name = await user_service.get_user_role_by_user_id(UUID(user_id))
 
         if required_roles and role_name not in required_roles:
             raise HTTPException(status_code=403, detail="Not enough permissions")

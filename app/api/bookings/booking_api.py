@@ -17,8 +17,8 @@ def get_booking_service(db: AsyncSession = Depends(get_db),) -> BookingService:
     return BookingService(repo)
 
 
-@router.get("/me", response_model=list[BookingRead])
-async def get_my_bookings(
+@router.get("/me", operation_id="get_my_bookings_me")
+async def get_my_bookings_user(
     current_user: CurrentUser = Depends(get_current_user),
     service: BookingService = Depends(get_booking_service),
 ):

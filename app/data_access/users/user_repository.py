@@ -38,13 +38,12 @@ class UserRepository:
         result = await self.db.execute(
             select(User)
             .options(selectinload(User.role))
-            .where((User.email == email, User.password == hashed_password)
+            .where(
+                User.email == email,
+                User.password_hash == hashed_password
             )
         )
-
-        user = result.scalar_one_or_none()
-
-        return user
+        return result.scalar_one_or_none()
 
 
     async def get_user_role_by_user_id(self, user_id: int) -> str | None:
