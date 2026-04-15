@@ -1,27 +1,30 @@
+from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import (Column, String, ForeignKey, Integer, TIMESTAMP)
+
 from sqlalchemy.orm import relationship
+from sqlalchemy import (Column, TIMESTAMP, Integer, ForeignKey, Text, UniqueConstraint)
 
 from data_access.db.base import Base
+
 
 class Review(Base):
     __tablename__ = "reviews"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    student_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    tutor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    booking_id = Column(UUID(as_uuid=True), ForeignKey("bookings.id"))
+    student_id = Column(UUID(as_uuid=True), ForeignKey("students.id"), nullable=False)
+    course_id = Column(UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False)
 
     rating = Column(Integer, nullable=False)
-    comment = Column(String(1000))
+    comment = Column(Text, nullable=False)
 
-    created_at = Column(TIMESTAMP, server_default=func.now())
+    __table_args__ = (
+        UniqueConstraint("student_id", "course_id", name="unique_review"),
+    )
 
-    # связи
-    student = relationship("User", foreign_keys=[student_id])
-    tutor = relationship("User", foreign_keys=[tutor_id])
-    booking = relationship("Bookings")
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
 
+    student = relationship("Student")
+    course = relationship("Course")
+    
