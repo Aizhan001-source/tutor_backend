@@ -1,8 +1,8 @@
-"""initial migration
+"""Initial
 
-Revision ID: 2434e7131a49
+Revision ID: 5f752900b247
 Revises: 
-Create Date: 2026-04-15 13:09:48.621723
+Create Date: 2026-04-18 11:35:08.878920
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '2434e7131a49'
+revision: str = '5f752900b247'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -33,20 +33,6 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
-    op.create_table('tutors',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('bio', sa.String(), nullable=True),
-    sa.Column('experience_years', sa.Integer(), nullable=True),
-    sa.Column('education', sa.Text(), nullable=True),
-    sa.Column('price_per_hour', sa.Numeric(precision=10, scale=2), nullable=True),
-    sa.Column('currency', sa.String(length=10), nullable=True),
-    sa.Column('average_rating', sa.Numeric(precision=3, scale=2), nullable=True),
-    sa.Column('total_reviews', sa.Integer(), nullable=True),
-    sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
-    sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
-    sa.CheckConstraint('experience_years >= 0', name='check_experience'),
-    sa.PrimaryKeyConstraint('id')
-    )
     op.create_table('users',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('email', sa.String(length=255), nullable=False),
@@ -60,18 +46,10 @@ def upgrade() -> None:
     sa.Column('last_seen_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
     sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
+    sa.Column('role_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
-    )
-    op.create_table('courses',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('tutor_id', sa.UUID(), nullable=False),
-    sa.Column('subject_id', sa.UUID(), nullable=False),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
-    sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
-    sa.ForeignKeyConstraint(['subject_id'], ['subjects.id'], ),
-    sa.ForeignKeyConstraint(['tutor_id'], ['tutors.id'], ),
-    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('messages',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -90,12 +68,46 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id')
     )
+    op.create_table('tutors',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('bio', sa.String(), nullable=True),
+    sa.Column('experience_years', sa.Integer(), nullable=True),
+    sa.Column('education', sa.Text(), nullable=True),
+    sa.Column('price_per_hour', sa.Numeric(precision=10, scale=2), nullable=True),
+    sa.Column('currency', sa.String(length=10), nullable=True),
+    sa.Column('average_rating', sa.Numeric(precision=3, scale=2), nullable=True),
+    sa.Column('total_reviews', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.CheckConstraint('experience_years >= 0', name='check_experience'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id')
+    )
     op.create_table('user_roles',
     sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('role_id', sa.UUID(), nullable=False),
     sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('user_id', 'role_id')
+    )
+    op.create_table('courses',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('tutor_id', sa.UUID(), nullable=False),
+    sa.Column('subject_id', sa.UUID(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
+    sa.ForeignKeyConstraint(['subject_id'], ['subjects.id'], ),
+    sa.ForeignKeyConstraint(['tutor_id'], ['tutors.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('tutor_subjects',
+    sa.Column('tutor_id', sa.UUID(), nullable=False),
+    sa.Column('subject_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['subject_id'], ['subjects.id'], ),
+    sa.ForeignKeyConstraint(['tutor_id'], ['tutors.id'], ),
+    sa.PrimaryKeyConstraint('tutor_id', 'subject_id')
     )
     op.create_table('course_students',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -170,12 +182,13 @@ def downgrade() -> None:
     op.drop_table('reviews')
     op.drop_table('favorites')
     op.drop_table('course_students')
+    op.drop_table('tutor_subjects')
+    op.drop_table('courses')
     op.drop_table('user_roles')
+    op.drop_table('tutors')
     op.drop_table('students')
     op.drop_table('messages')
-    op.drop_table('courses')
     op.drop_table('users')
-    op.drop_table('tutors')
     op.drop_table('subjects')
     op.drop_table('roles')
     # ### end Alembic commands ###

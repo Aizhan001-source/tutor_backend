@@ -3,9 +3,16 @@ import uuid
 from sqlalchemy.sql import func
 
 from sqlalchemy.orm import relationship
-from sqlalchemy import (Column, String,Integer, CheckConstraint, Numeric, Text, TIMESTAMP)
+from sqlalchemy import (Column, ForeignKey, String,Integer, CheckConstraint, Numeric, Text, TIMESTAMP, Table)
 
 from data_access.db.base import Base
+
+tutor_subjects = Table(
+    "tutor_subjects",
+    Base.metadata,
+    Column("tutor_id", ForeignKey("tutors.id"), primary_key=True),
+    Column("subject_id", ForeignKey("subjects.id"), primary_key=True),
+)
 
 
 class Tutor(Base):
@@ -15,7 +22,6 @@ class Tutor(Base):
 
     bio = Column(String)
     experience_years = Column(Integer, default=0)
-    education = Column(Text)
 
     price_per_hour = Column(Numeric(10, 2))
     currency = Column(String(10), default="KZT")
@@ -26,16 +32,20 @@ class Tutor(Base):
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
-    user = relationship("User", back_populates="tutor_profile")
+    user = relationship("User", back_populates="tutor")
     courses = relationship("Course", back_populates="tutor")
+    education = relationship("Education", back_populates="tutors")
+
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
+    education_id = Column(UUID(as_uuid=True), ForeignKey("educations.id"), nullable=False, unique=True)
+
     
     __table_args__ = (
         CheckConstraint("experience_years >= 0", name="check_experience"),
     )
-    
 
     subjects = relationship(
-        "subject",
+        "Subject",
         secondary="tutor_subjects",
         back_populates="tutors"
     )

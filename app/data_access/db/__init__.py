@@ -1,6 +1,5 @@
 from .models.user import User
 from .models.role import Role
-from .models.user_role import UserRoles
 
 from .models.student import Student
 from .models.tutor import Tutor
@@ -18,14 +17,14 @@ from .models.favorite import Favorite
 from .models.review import Review
 
 from .models.message import Message
-
+from .models.education import Education
 
 __all__ = [
     "User",
     "Role",
-    "UserRoles",
 
     "Student",
+    "Education",
     "Tutor",
 
     "Subject",

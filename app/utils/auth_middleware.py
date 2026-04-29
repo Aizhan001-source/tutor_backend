@@ -30,7 +30,8 @@ def get_current_user(required_roles: list[str] | None = None):
 
         # получаем роль из БД
         role_name = await user_service.get_user_role_by_user_id(UUID(user_id))
-
+        print("ADSAdDDAADADDADA", role_name)
+        
         if required_roles and role_name not in required_roles:
             raise HTTPException(status_code=403, detail="Not enough permissions")
 

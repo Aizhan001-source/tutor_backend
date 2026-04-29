@@ -8,10 +8,10 @@ from sqlalchemy import (Column, String)
 from data_access.db.base import Base
 
 
-class Role(Base):
-    __tablename__ = "roles"
+class Education(Base):
+    __tablename__ = "educations"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(50), unique=True)
 
-    users = relationship("User", back_populates="role")
+    tutors = relationship("Tutor", back_populates="education")

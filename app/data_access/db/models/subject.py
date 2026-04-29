@@ -12,3 +12,10 @@ class Subject(Base):
     name = Column(String(255), nullable=False, unique=True)
 
     courses = relationship("Course", back_populates="subject")
+
+
+    tutors = relationship(
+        "Tutor",
+        secondary="tutor_subjects",
+        back_populates="subjects"
+    )

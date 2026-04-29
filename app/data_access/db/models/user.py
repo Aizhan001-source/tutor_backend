@@ -30,6 +30,11 @@ class User(Base):
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
-    roles = relationship("Role", secondary="user_roles", back_populates="users")
+    role = relationship("Role", back_populates="users")
     
-    tutor_profile = relationship("Tutor", back_populates="user", uselist=False)
+    role_id = Column(UUID(as_uuid=True),  ForeignKey("roles.id"), nullable=False)
+    
+    tutor = relationship("Tutor", back_populates="user", uselist=False)
+
+    sent_messages =  relationship("Message", foreign_keys="Message.sender_id", back_populates="sender")
+    received_messages =  relationship("Message", foreign_keys="Message.receiver_id", back_populates="receiver")
