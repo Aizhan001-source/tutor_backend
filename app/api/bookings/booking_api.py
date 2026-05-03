@@ -1,53 +1,44 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID
 
-from api.bookings.booking_schemas import BookingRead, BookingCreate, BookingUpdate
-from data_access.bookings.booking_repository import BookingRepository
-from business_logic.bookings.booking_service import BookingService
 from utils.auth_middleware import get_current_user
-from api.users.user_schemas import CurrentUser
 from data_access.db.session import get_db
+from api.users.user_schemas import CurrentUser
+
+from data_access.bookings.booking_repository import BookingRepository
+from data_access.tutors.tutor_repository import TutorRepository
+from data_access.users.user_repository import UserRepository  
+from business_logic.bookings.booking_service import BookingService
+
+from api.bookings.booking_schemas import BookingRead, BookingCreate
 
 router = APIRouter()
 
 
-def get_booking_service(db: AsyncSession = Depends(get_db)) -> BookingService:
-    return BookingService(BookingRepository(db))
 
+def get_service(db: AsyncSession = Depends(get_db)) -> BookingService:
+    return BookingService(
+        BookingRepository(db),
+        TutorRepository(db),
+        UserRepository(db)   
+    )
 
-@router.get("/me", response_model=list[BookingRead])
-async def get_my_bookings(
-    current_user: CurrentUser = Depends(get_current_user),
-    service: BookingService = Depends(get_booking_service),
-):
-    if current_user.role != "student":
-        raise HTTPException(403, "Only students")
-    return await service.get_bookings_by_student(current_user.id)
-
-
-@router.post("/", response_model=BookingRead)
+@router.post("/", response_model=BookingRead, status_code=201)
 async def create_booking(
-    booking: BookingCreate,
-    current_user: CurrentUser = Depends(get_current_user),
-    service: BookingService = Depends(get_booking_service),
+    data: BookingCreate,
+    service: BookingService = Depends(get_service),
+    user: CurrentUser = Depends(get_current_user)
 ):
-    return await service.create_booking(current_user.id, booking)
+    return await service.create(
+        user.id,
+        data.tutor_id,
+        data.start_time,
+        data.duration_minutes
+    )
 
-
-@router.get("/{booking_id}", response_model=BookingRead)
-async def get_booking(
-    booking_id: UUID,
-    current_user: CurrentUser = Depends(get_current_user),
-    service: BookingService = Depends(get_booking_service),
+@router.get("/", response_model=list[BookingRead])
+async def get_my_bookings(
+    service: BookingService = Depends(get_service),
+    user: CurrentUser = Depends(get_current_user)
 ):
-    return await service.get_by_id(booking_id)
-
-
-@router.patch("/{booking_id}/cancel")
-async def cancel_booking(
-    booking_id: UUID,
-    current_user: CurrentUser = Depends(get_current_user),
-    service: BookingService = Depends(get_booking_service),
-):
-    return await service.cancel_booking(booking_id, current_user.id)
+    return await service.get_my(user.id)

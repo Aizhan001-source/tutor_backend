@@ -1,74 +1,65 @@
 from uuid import UUID
 from datetime import datetime, timedelta
-
 from fastapi import HTTPException
 
 from data_access.bookings.booking_repository import BookingRepository
-from data_access.db.models.booking import Booking
-from data_access.db.models.booking import BookingStatus
+from data_access.tutors.tutor_repository import TutorRepository
+from data_access.users.user_repository import UserRepository
 
 
 class BookingService:
-    def __init__(self, repo: BookingRepository):
-        self.repo = repo
+    def __init__(self, booking_repo: BookingRepository, tutor_repo: TutorRepository, user_repo: UserRepository):
+        self.booking_repo = booking_repo
+        self.tutor_repo = tutor_repo
+        self.user_repo = user_repo
 
-    async def create_booking(
+    async def create(
         self,
         student_id: UUID,
         tutor_id: UUID,
         start_time: datetime,
-        duration_hours: int = 1
+        duration_minutes: int
     ):
-        end_time = start_time + timedelta(hours=duration_hours)
+        # tutor check
+        tutor = await self.tutor_repo.get_tutor_by_id(tutor_id)
+        if not tutor:
+            raise HTTPException(status_code=404, detail="Tutor not found")
 
-        # ❗ проверка конфликта (если есть такая логика в repo)
-        exists = await self.repo.get_by_time(
-            tutor_id=tutor_id,
-            start_time=start_time
-        )
+        # student check
+        student = await self.user_repo.get_by_id(student_id)
+        if not student:
+            raise HTTPException(status_code=404, detail="Student not found")
 
-        if exists:
-            raise HTTPException(
-                status_code=400,
-                detail="Time slot already booked"
-            )
+        # validation
+        if duration_minutes < 15 or duration_minutes > 180:
+            raise HTTPException(status_code=400, detail="Invalid duration")
 
-        booking = Booking(
+        if not start_time:
+            raise HTTPException(status_code=400, detail="start_time is required")
+
+        end_time = start_time + timedelta(minutes=duration_minutes)
+
+        booking = await self.booking_repo.create(
             student_id=student_id,
             tutor_id=tutor_id,
             start_time=start_time,
+            duration_minutes=duration_minutes,
             end_time=end_time,
-            status=BookingStatus.PENDING
         )
 
-        return await self.repo.create(booking)
-
-    async def get_by_id(self, booking_id: UUID):
-        booking = await self.repo.get_by_id(booking_id)
-
-        if not booking:
-            raise HTTPException(
-                status_code=404,
-                detail="Booking not found"
-            )
+        # 🔥 ВОТ ЭТО КРИТИЧНО
+        await self.booking_repo.db.commit()
+        await self.booking_repo.db.refresh(booking)
 
         return booking
 
-    async def get_by_student(self, student_id: UUID):
-        return await self.repo.get_by_student(student_id)
+    async def get_my(self, student_id: UUID):
+        return await self.booking_repo.get_by_student(student_id)
 
-    async def get_by_tutor(self, tutor_id: UUID):
-        return await self.repo.get_by_tutor(tutor_id)
-
-    async def cancel_booking(self, booking_id: UUID, user_id: UUID):
-        booking = await self.repo.get_by_id(booking_id)
+    async def get_by_id(self, booking_id: UUID):
+        booking = await self.booking_repo.get_by_id(booking_id)
 
         if not booking:
             raise HTTPException(status_code=404, detail="Booking not found")
 
-        if booking.student_id != user_id:
-            raise HTTPException(status_code=403, detail="Forbidden")
-
-        booking.status = BookingStatus.CANCELLED
-
-        return await self.repo.update(booking)
+        return booking

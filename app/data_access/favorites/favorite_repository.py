@@ -1,15 +1,17 @@
 from uuid import UUID
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from data_access.db.models.favorite import Favorite
+from data_access.db.models.tutor import Tutor
 
 
 class FavoriteRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def add_to_favorite(self, student_id: UUID, tutor_id: UUID):
+    async def add(self, student_id: UUID, tutor_id: UUID):
         favorite = Favorite(
             student_id=student_id,
             tutor_id=tutor_id
@@ -19,23 +21,33 @@ class FavoriteRepository:
         await self.db.refresh(favorite)
         return favorite
 
-    async def get_favorite(self, student_id: UUID, tutor_id: UUID):
-        stmt = select(Favorite).where(
+    async def remove(self, student_id: UUID, tutor_id: UUID):
+        query = delete(Favorite).where(
             Favorite.student_id == student_id,
             Favorite.tutor_id == tutor_id
         )
-        result = await self.db.execute(stmt)
-        return result.scalar_one_or_none()
+        await self.db.execute(query)
+        await self.db.commit()
 
     async def get_by_student(self, student_id: UUID):
-        stmt = select(Favorite).where(Favorite.student_id == student_id)
-        result = await self.db.execute(stmt)
+        query = (
+            select(Favorite)
+            .where(Favorite.student_id == student_id)
+            .options(
+                selectinload(Favorite.tutor)
+                .selectinload(Tutor.user),
+                selectinload(Favorite.tutor)
+                .selectinload(Tutor.education),
+            )
+        )
+
+        result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def remove_from_favorite(self, student_id: UUID, tutor_id: UUID):
-        stmt = delete(Favorite).where(
+    async def exists(self, student_id: UUID, tutor_id: UUID) -> bool:
+        query = select(Favorite).where(
             Favorite.student_id == student_id,
             Favorite.tutor_id == tutor_id
         )
-        await self.db.execute(stmt)
-        await self.db.commit()
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none() is not None

@@ -1,41 +1,66 @@
-from uuid import UUID
 from fastapi import HTTPException
-
+from sqlalchemy import UUID
+from sqlalchemy.ext.asyncio import AsyncSession
+from api.tutors.tutor_schemas import EducationRead, TutorRead
+from api.users.user_schemas import UserRead
 from data_access.tutors.tutor_repository import TutorRepository
 
 
 class TutorService:
+    def __init__(self, db: AsyncSession):
+        self.repo = TutorRepository(db)
 
-    def __init__(self, repo: TutorRepository):
-        self.repo = repo
+    async def get_all_tutors(self):
+        tutors = await self.repo.get_all_tutors()
 
-    async def get_all(self):
-        return await self.repo.get_all()
-
-    async def get_by_id(self, tutor_id: UUID):
-        tutor = await self.repo.get_by_id(tutor_id)
+        return [
+            TutorRead(
+                id=tutor.id,
+                bio=tutor.bio,
+                experience_years=tutor.experience_years,
+                education=EducationRead(
+                    id=tutor.education.id,
+                    name=tutor.education.name,
+                ),
+                user=UserRead(
+                    id=tutor.user.id,
+                    first_name=tutor.user.first_name,
+                    last_name=tutor.user.last_name,
+                    email=tutor.user.email,
+                ),
+                price_per_hour=tutor.price_per_hour,
+                currency=tutor.currency,
+                average_rating=tutor.average_rating,
+                total_reviews=tutor.total_reviews,
+                created_at=tutor.created_at,
+                updated_at=tutor.updated_at,
+            ) for tutor in tutors
+        ]
+    
+    async def get_tutor_by_id(self, tutor_id:UUID):
+        tutor = await self.repo.get_tutor_by_id(tutor_id)
+        
         if not tutor:
-            raise HTTPException(status_code=404, detail="Tutor not found")
-        return tutor
-
-    async def create(self, data):
-        return await self.repo.create(data)
-
-    async def update(self, tutor_id: UUID, data):
-        tutor = await self.repo.get_by_id(tutor_id)
-
-        if not tutor:
-            raise HTTPException(status_code=404, detail="Tutor not found")
-
-        for field, value in data.dict(exclude_unset=True).items():
-            setattr(tutor, field, value)
-
-        return await self.repo.update(tutor)
-
-    async def delete(self, tutor_id: UUID):
-        tutor = await self.repo.get_by_id(tutor_id)
-
-        if not tutor:
-            raise HTTPException(status_code=404, detail="Tutor not found")
-
-        await self.repo.delete(tutor)
+            raise HTTPException(status_code=404, detail="tutor Not Found")
+        
+        return TutorRead(
+            id=tutor.id,
+            bio=tutor.bio,
+            experience_years=tutor.experience_years,
+            education=EducationRead(
+                id=tutor.education.id,
+                name=tutor.education.name
+            ),
+            user=UserRead(
+                id=tutor.user.id,
+                first_name=tutor.user.first_name,
+                last_name=tutor.user.last_name,
+                email=tutor.user.email,
+            ),
+            price_per_hour=tutor.price_per_hour,
+            currency=tutor.currency,
+            average_rating=tutor.average_rating,
+            total_reviews=tutor.total_reviews,
+            created_at=tutor.created_at,
+            updated_at=tutor.updated_at,
+        )

@@ -1,60 +1,110 @@
-from uuid import UUID
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
+from uuid import UUID
 
+from sqlalchemy.orm import selectinload
 from data_access.db.models.role import Role
 from data_access.db.models.user import User
-from errors.user_error import UserAlreadyExistsError
 
 
 class UserRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def register_user(self, first_name, last_name, email, hashed_password, role_name: str):
+    async def get_by_id(self, user_id: UUID):
+
         result = await self.db.execute(
-            select(Role).where(Role.name == role_name)
-        )
-        role = result.scalar_one_or_none()
 
-        if not role:
-            raise Exception(f"Role '{role_name}' not found")
+            select(User).where(User.id == user_id)
 
-        user = User(
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            password_hash=hashed_password,
-            role_id=role.id
         )
 
-        self.db.add(user)
-
-        try:
-            await self.db.commit()
-            await self.db.refresh(user)
-            return user
-
-        except IntegrityError:
-            await self.db.rollback()
-            raise UserAlreadyExistsError("User already exists")
+        return result.scalar_one_or_none()
 
     async def get_by_email(self, email: str):
+
         result = await self.db.execute(
+
             select(User).where(User.email == email)
+
         )
+
         return result.scalar_one_or_none()
 
-    async def get_user_profile(self, user_id: UUID):
+    async def register_user(self, first_name, last_name, email, hashed_password):
         result = await self.db.execute(
-            select(User).where(User.id == user_id)
+            select(Role).where(
+                (Role.name == "conditer")
+            )
         )
-        return result.scalar_one_or_none()
+        role_object = result.scalar_one_or_none()
+        
+        user = User(
+            first_name = first_name, 
+            last_name = last_name, 
+            email = email, 
+            password = hashed_password,
+            role_id=role_object.id,
+        )
 
-    async def update_user_profile(self, user: User):
         self.db.add(user)
+
         await self.db.commit()
         await self.db.refresh(user)
+
+        return user
+
+    async def login_user(self, email, hashed_password):
+        result = await self.db.execute(
+            select(User).where(
+                (User.email == email)
+            )
+        )
+
+        user_exists = result.scalar_one_or_none()
+
+        if user_exists:
+            user = await self.db.execute(
+                select(User).where(
+                     (User.email == email),
+                    (User.password_hash == hashed_password)
+                )
+            )
+
+
+            return user.scalar_one_or_none()
+
+        return None
+
+    async def get_all_users(self):
+        result = await self.db.execute(
+            select(User)
+            .options(selectinload(User.role))
+        )
+
+        users = result.scalars().all()
+        return users
+
+    async def get_user_role_by_user_id(self, user_id: UUID) -> str | None:
+        print("ADSDDADADADAD", user_id)
+        result = await self.db.execute(
+            select(User)
+            .options(selectinload(User.role))
+            .where(User.id == user_id)
+        )
+
+        user = result.scalar_one_or_none()
+        # print("AADSDASDASDAS", user, user.role)
+        if user and user.role:
+            return user.role.name
+        return None
+    
+    async def get_user_profile(self, user_id: UUID) -> User | None:
+        result = await self.db.execute(
+            select(User)
+            .options(selectinload(User.role))
+            .where(User.id == user_id)
+        )
+        user = result.scalar_one_or_none()
+        
         return user

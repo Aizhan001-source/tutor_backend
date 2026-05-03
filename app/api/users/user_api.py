@@ -1,57 +1,56 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from api.users.user_schemas import (
-    UserCreate,
-    UserLogin,
-    UserLoginResponse,
-    UserRead,
-    UserUpdate,
-)
+from api.users.user_schemas import UserAdminCreate, UserCreate, UserLogin, UserRead
 from utils.auth_middleware import get_current_user
 from business_logic.users.user_service import UserService
 from data_access.db.session import get_db
+from api.users.user_schemas import CurrentUser
 
 router = APIRouter()
-
 
 def get_user_service(db: AsyncSession = Depends(get_db)) -> UserService:
     return UserService(db)
 
 
-# ✅ REGISTER
 @router.post("/register", response_model=UserRead)
 async def user_register(
     user: UserCreate,
     service: UserService = Depends(get_user_service),
 ):
-    return await service.register_user(
-        user.first_name,
-        user.last_name,
-        user.email,
-        user.password
-    )
+    return await service.register_user(user.first_name, user.last_name, user.email, user.password)
 
 
-# ✅ LOGIN
-@router.post("/login", response_model=UserLoginResponse)
+@router.post("/login")
 async def user_login(
     user: UserLogin,
     service: UserService = Depends(get_user_service),
 ):
-    return await service.login_user(user.email, user.password)
+    result = await service.login_user(user.email, user.password)
 
+    
+    if not result:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    return result
 
-# ✅ UPDATE PROFILE
-@router.put("/profile", response_model=UserRead)
-async def update_user_profile(
-    user_profile: UserUpdate,
+@router.get("/all")
+async def get_all_users(
     service: UserService = Depends(get_user_service),
-    current_user=Depends(
-        get_current_user(required_roles=["admin", "student", "tutor"])
-    ),
+    user: CurrentUser = Depends(get_current_user),
 ):
-    return await service.update_user_profile(
-        current_user.id,
-        user_profile
-    )
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    return await service.get_all_users()
+
+
+@router.get("/profile")
+async def get_user_profile(
+    service: UserService = Depends(get_user_service),
+    user: CurrentUser = Depends(get_current_user),
+):
+    result = await service.get_user_profile(user.id)
+
+    if not result:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return result

@@ -1,39 +1,37 @@
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from data_access.db.models.favorite import Favorite
-from data_access.db.models.user import User
+from data_access.db.models.student import Student
+from data_access.db.models.course import Course
 
 
 async def seed_favorites(db: AsyncSession):
 
-    students = (await db.execute(
-        select(User).where(User.role.has(name="student"))
-    )).scalars().all()
+    students = (await db.execute(select(Student))).scalars().all()
+    courses = (await db.execute(select(Course))).scalars().all()
 
-    tutors = (await db.execute(
-        select(User).where(User.role.has(name="tutor"))
-    )).scalars().all()
-
-    if not students or not tutors:
+    if not students or not courses:
         return
 
     for i, student in enumerate(students):
-        tutor = tutors[i % len(tutors)]
+        course = courses[i % len(courses)]
 
-        exists = await db.execute(
+        exists = (await db.execute(
             select(Favorite).where(
-                Favorite.user_id == student.id,
-                Favorite.tutor_id == tutor.id
+                and_(
+                    Favorite.student_id == student.id,
+                    Favorite.course_id == course.id
+                )
             )
-        )
+        )).scalar_one_or_none()
 
-        if exists.scalar_one_or_none():
+        if exists:
             continue
 
         db.add(Favorite(
-            user_id=student.id,
-            tutor_id=tutor.id
+            student_id=student.id,
+            course_id=course.id
         ))
 
     await db.commit()

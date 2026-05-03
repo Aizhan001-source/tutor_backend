@@ -17,6 +17,8 @@ class Message(Base):
 
     content = Column(String(2000))
 
+    is_read = Column(Boolean, default=False, nullable=False)
+
     created_at = Column(TIMESTAMP, server_default=func.now())
 
     sender = relationship("User", foreign_keys=[sender_id], back_populates="sent_messages")

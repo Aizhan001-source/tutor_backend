@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, EmailStr
 from uuid import UUID
 
@@ -11,20 +11,13 @@ class UserRead(BaseModel):
     
     model_config = {"from_attributes": True}
 
-class UserProfileRead(BaseModel):
-    first_name: str
-    last_name: str
-    email: str
-
-    model_config = {"from_attributes": True}
-
 
 class UserCreate(BaseModel):
     first_name: str
     last_name: str
     email: EmailStr
     password: str
-    role: str
+
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -63,17 +56,13 @@ class UserAdminCreate(BaseModel):
     avatar_url: Optional[str]
     role: str
 
+class UserProfileRead(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
+
+    model_config= {"from_attributes":True}
+
 class CurrentUser(BaseModel):
     id: UUID
-    email: EmailStr
     role: str
-
-    model_config = {"from_attributes": True}
-
-
-class UserUpdate(BaseModel):
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    old_password: Optional[str] = None
-    new_password: Optional[str] = None

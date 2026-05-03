@@ -9,20 +9,22 @@ async def seed_payments(db: AsyncSession):
 
     bookings = (await db.execute(select(Booking))).scalars().all()
 
+    if not bookings:
+        return
+
     for booking in bookings:
 
-        exists = await db.execute(
+        exists = (await db.execute(
             select(Payment).where(Payment.booking_id == booking.id)
-        )
+        )).scalar_one_or_none()
 
-        if exists.scalar_one_or_none():
+        if exists:
             continue
 
         db.add(Payment(
             booking_id=booking.id,
-            amount=50.00,
-            currency="KZT",
-            status=PaymentStatus.completed
+            amount=5000,  # или booking.price если есть
+            status=PaymentStatus.pending
         ))
 
     await db.commit()
