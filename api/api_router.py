@@ -1,0 +1,38 @@
+from fastapi import APIRouter
+from api.users.user_api import router as users_router
+from api.tutors.tutor_api import router as tutor_router
+from api.reviews.review_api import router as review_router
+from api.courses.course_api import router as course_router
+from api.subjects.subject_api import router as subject_router
+
+api_router = APIRouter()
+
+api_router.include_router(
+    users_router,
+    prefix="/users",
+    tags=["USER"]
+)
+
+api_router.include_router(
+    tutor_router,
+    prefix="/tutors",
+    tags=["TUTOR"]
+)
+
+api_router.include_router(
+    review_router,
+    prefix="/reviews",
+    tags=["REVIEW"]
+)
+
+api_router.include_router(
+    course_router,
+    prefix="/courses",
+    tags=["COURSE"]
+)
+
+api_router.include_router(
+    subject_router,
+    prefix="/subjects",
+    tags=["SUBJECTS"]
+)
