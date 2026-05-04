@@ -27,11 +27,6 @@ async def add_to_favorites(
     service: FavoriteService = Depends(get_service),
     user: CurrentUser = Depends(get_current_user)
 ):
-    
-    print("USER:", user.id)  # 🔥 ADD THIS
-
-    print("TUTOR:", tutor_id)
-
     return await service.add(user.id, tutor_id)
 
 @router.delete("/{tutor_id}")
@@ -47,4 +42,7 @@ async def get_my_favorites(
     service: FavoriteService = Depends(get_service),
     user: CurrentUser = Depends(get_current_user)
 ):
-    return await service.get_my(user.id)
+    favorites = await service.get_my(user.id)
+
+    # 🔥 IMPORTANT: return tutors, not favorites
+    return [fav.tutor for fav in favorites]

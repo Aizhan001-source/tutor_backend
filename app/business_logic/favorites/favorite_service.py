@@ -11,17 +11,19 @@ class FavoriteService:
         self.tutor_repo = tutor_repo
 
     async def add(self, student_id: UUID, tutor_id: UUID):
+        print("ADD FAVORITE:", student_id, tutor_id)
+
         tutor = await self.tutor_repo.get_tutor_by_id(tutor_id)
 
         if not tutor:
-            raise HTTPException(status_code=404, detail="Tutor not found")
+            print("NO TUTOR")
+            raise HTTPException(404)
 
         exists = await self.fav_repo.exists(student_id, tutor_id)
-        if exists:
-            raise HTTPException(status_code=400, detail="Already in favorites")
+        print("EXISTS:", exists)
 
         return await self.fav_repo.add(student_id, tutor_id)
-
+    
     async def remove(self, student_id: UUID, tutor_id: UUID):
         return await self.fav_repo.remove(student_id, tutor_id)
 
