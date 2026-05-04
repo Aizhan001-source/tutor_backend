@@ -32,8 +32,9 @@ class StudentService:
             "count": count
         }
 
-    async def get_by_user_id(self, user_id):
-        return await self.repo.get_by_user_id(user_id)
+async def get_by_user_id(self, user_id):
+    from uuid import UUID
+    return await self.repo.get_by_user_id(UUID(str(user_id)))
     
 
     async def delete(self, student):
