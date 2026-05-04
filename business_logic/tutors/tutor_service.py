@@ -64,3 +64,6 @@ class TutorService:
             created_at=tutor.created_at,
             updated_at=tutor.updated_at,
         )
+    
+    async def get_tutors_count(self) -> int:
+        return await self.repo.get_tutors_count()

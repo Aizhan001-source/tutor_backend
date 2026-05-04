@@ -1,5 +1,5 @@
 from typing import List
-from sqlalchemy import UUID, select
+from sqlalchemy import UUID, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -27,3 +27,9 @@ class TutorRepository:
             .options(selectinload(Tutor.education))
         )
         return result.scalar_one_or_none()
+    
+    async def get_tutors_count(self) -> int:
+        result = await self.db.execute(
+            select(func.count(Tutor.id))
+        )
+        return result.scalar_one()

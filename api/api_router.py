@@ -4,6 +4,7 @@ from api.tutors.tutor_api import router as tutor_router
 from api.reviews.review_api import router as review_router
 from api.courses.course_api import router as course_router
 from api.subjects.subject_api import router as subject_router
+from api.students.student_api import router as student_router
 
 api_router = APIRouter()
 
@@ -35,4 +36,10 @@ api_router.include_router(
     subject_router,
     prefix="/subjects",
     tags=["SUBJECTS"]
+)
+
+api_router.include_router(
+    student_router,
+    prefix="/students",
+    tags=["STUDENT"]
 )

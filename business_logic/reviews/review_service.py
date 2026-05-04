@@ -14,28 +14,31 @@ class ReviewService:
         self.repo = ReviewRepository(db)
         self.db = db
 
+    # 🔥 FIXED: get all reviews
     async def get_all_reviews(self):
-        rows = await self.repo.get_all_reviews_with_avg()
+        reviews = await self.repo.get_all_reviews()
 
         return [
             ReviewRead(
-                id=review.id,
-                student_id=review.student_id,
-                course_id=review.course_id,
-                rating=review.rating,
-                comment=review.comment,
-                average_rating=avg_rating,
+                id=r.id,
+                student_id=r.student_id,
+                course_id=r.course_id,
+                rating=r.rating,
+                comment=r.comment,
+                average_rating=0.0,  # нет avg в этом запросе
             )
-            for review, avg_rating in rows
+            for r in reviews
         ]
 
+    # 🔥 FIXED: get by id
     async def get_review_by_id(self, review_id: UUID):
-        row = await self.repo.get_review_with_avg_by_id(review_id)
+        review = await self.repo.get_review_by_id(review_id)
 
-        if not row:
+        if not review:
             raise HTTPException(status_code=404, detail="Review not found")
 
-        review, avg_rating = row
+        # отдельный запрос для avg
+        rating_data = await self.repo.get_course_rating(review.course_id)
 
         return ReviewRead(
             id=review.id,
@@ -43,7 +46,7 @@ class ReviewService:
             course_id=review.course_id,
             rating=review.rating,
             comment=review.comment,
-            average_rating=avg_rating,
+            average_rating=rating_data["average_rating"],
         )
 
     async def create_review(self, data: ReviewCreate):

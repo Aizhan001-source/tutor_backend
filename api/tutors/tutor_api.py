@@ -15,6 +15,12 @@ async def get_all_tutors(
     service: TutorService = Depends(get_tutor_service),
 ):
     return await service.get_all_tutors()
+    
+@router.get("/count")
+async def get_tutors_count(
+    service: TutorService = Depends(get_tutor_service),
+):
+    return await service.get_tutors_count()
 
 @router.get("/by_id/{tutor_id}", response_model=TutorRead)
 async def get_tutor_by_id(

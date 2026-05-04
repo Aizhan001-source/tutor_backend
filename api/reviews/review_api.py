@@ -3,7 +3,12 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from business_logic.reviews.review_service import ReviewService
-from api.reviews.review_schemas import ReviewRead, ReviewCreate, ReviewWithRatingResponse, DeleteReviewResponse
+from api.reviews.review_schemas import (
+    ReviewRead,
+    ReviewCreate,
+    ReviewWithRatingResponse,
+    DeleteReviewResponse,
+)
 from data_access.db.session import get_db
 from utils.auth_middleware import get_current_user
 
@@ -14,14 +19,14 @@ def get_review_service(db: AsyncSession = Depends(get_db)) -> ReviewService:
     return ReviewService(db)
 
 
-@router.get("/all", response_model=list[ReviewRead])
+@router.get("/", response_model=list[ReviewRead])
 async def get_all_reviews(
     service: ReviewService = Depends(get_review_service),
 ):
     return await service.get_all_reviews()
 
 
-@router.get("/by_id/{review_id}", response_model=ReviewRead)
+@router.get("/{review_id}", response_model=ReviewRead)
 async def get_review_by_id(
     review_id: UUID,
     service: ReviewService = Depends(get_review_service),
@@ -30,7 +35,7 @@ async def get_review_by_id(
     return await service.get_review_by_id(review_id)
 
 
-@router.post("/create", response_model=ReviewWithRatingResponse)
+@router.post("/", response_model=ReviewWithRatingResponse)
 async def create_review(
     data: ReviewCreate,
     service: ReviewService = Depends(get_review_service),
@@ -39,7 +44,7 @@ async def create_review(
     return await service.create_review(data)
 
 
-@router.delete("/delete/{review_id}", response_model=DeleteReviewResponse)
+@router.delete("/{review_id}", response_model=DeleteReviewResponse)
 async def delete_review(
     review_id: UUID,
     service: ReviewService = Depends(get_review_service),

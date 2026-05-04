@@ -1,5 +1,6 @@
 from typing import Optional
 from uuid import UUID
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -11,37 +12,15 @@ class ReviewRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all_reviews_with_avg(self):
+    # 🔥 НОВЫЙ МЕТОД (БЫЛ ОТСУТСТВУЮЩИЙ)
+    async def get_all_reviews(self):
         result = await self.db.execute(
-            select(
-                Review,
-                func.avg(Review.rating)
-                .over(partition_by=Review.course_id)
-                .label("avg_rating")
-            ).options(
+            select(Review).options(
                 selectinload(Review.student),
                 selectinload(Review.course),
             )
         )
-
-        return result.all()  # [(Review, avg_rating), ...]
-
-    async def get_review_with_avg_by_id(self, review_id: UUID):
-        result = await self.db.execute(
-            select(
-                Review,
-                func.avg(Review.rating)
-                .over(partition_by=Review.course_id)
-                .label("avg_rating")
-            )
-            .where(Review.id == review_id)
-            .options(
-                selectinload(Review.student),
-                selectinload(Review.course),
-            )
-        )
-
-        return result.first()  
+        return result.scalars().all()
 
     async def get_course_rating(self, course_id: UUID):
         result = await self.db.execute(
